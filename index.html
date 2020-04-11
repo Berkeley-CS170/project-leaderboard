@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
+    <title>CS 170 Spring 2020 Project Leaderboard</title>
+  </head>
+
+
+  <body>
+      <div class="container" id="leaderboard">
+        <h1 class="title pt-4">Leaderboard</h1>
+        <div class="card">
+            <h5 class="card-header">
+                <a data-toggle="collapse" href="#collapse" aria-expanded="true" aria-controls="collapse" id="heading" class="d-block">
+                    <i class="fa fa-chevron-down pull-right"></i>
+                    small-1
+                </a>
+            </h5>
+            <div id="collapse" class="collapse" aria-labelledby="heading">
+                <div class="card-body" id="test">
+                </div>
+            </div>
+        </div>
+      </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sjcl/1.0.8/sjcl.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js'></script>
+    <script>
+
+    const sizes = ['small', 'medium', 'large'];
+    const numInputsPerSize = 10;
+
+    function refresh() {
+        Tabletop.init({
+            key: '18T2DTcjcamzYs2dCmqZFocG0Ftnfgnmf7aUpWs3z-g0',
+            callback: function(data, tabletop) {
+                generateLeaderboard(data);
+            },
+            simpleSheet: true,
+        });
+    }
+    function generateLeaderboard(data) {
+        const leaderboardData = {};
+        const names = {};
+        for (let i = 0; i < sizes.length; i++) {
+          const size = sizes[i];
+          for (let j = 1; j <= numInputsPerSize; j++) {
+            leaderboardData[`${size}-${j}`] = {};
+          }
+        }
+        for (let i = 0; i < data.length; i++) {
+            const submission = data[i];
+            const hash = submission['hash'];
+            const leaderboardName = submission['leaderboard_name'];
+            const timestamp = Date.parse(submission['timestamp'])
+            for (let key of Object.keys(leaderboardData)) {
+                leaderboardData[key][hash] = parseFloat(submission[key]);
+                if (!names.hasOwnProperty(hash) || names[hash]['timestamp'] < timestamp) {
+                    names[hash] = {leaderboardName, timestamp};
+                }
+            }
+        }
+        const leaderboards = {};
+        for (let key of Object.keys(leaderboardData)) {
+          const sortedEntries = Object.entries(leaderboardData[key]).sort(function compare(elem1, elem2) {
+              return elem1[1] - elem2[1];
+          });
+          leaderboards[key] = createLeaderboardList(names, sortedEntries);
+        }
+        document.getElementById("test").appendChild(leaderboards['small-1']);
+
+    }
+
+    function createLeaderboardList(names, sortedEntries) {
+        const table = document.createElement('table');
+        table.className = 'table';
+        for (let i = 0; i < sortedEntries.length; i++) {
+            const row = document.createElement('tr');
+            entry = sortedEntries[i];
+            const name = document.createElement('td');
+            name.innerHTML = names[entry[0]]['leaderboardName'];
+            row.appendChild(name);
+            const score = document.createElement('td');
+            score.innerHTML = entry[1];
+            row.appendChild(score);
+            table.appendChild(row);
+        }
+        return table;
+    }
+    window.addEventListener('DOMContentLoaded', refresh);
+
+    </script>
+  </body>
+</html>
