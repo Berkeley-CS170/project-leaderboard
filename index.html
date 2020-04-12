@@ -8,24 +8,17 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="./style.css">
     <title>CS 170 Spring 2020 Project Leaderboard</title>
   </head>
 
 
   <body>
-      <div class="container" id="leaderboard">
-        <h1 class="title pt-4">Leaderboard</h1>
-        <div class="card">
-            <h5 class="card-header">
-                <a data-toggle="collapse" href="#collapse" aria-expanded="true" aria-controls="collapse" id="heading" class="d-block">
-                    <i class="fa fa-chevron-down pull-right"></i>
-                    small-1
-                </a>
-            </h5>
-            <div id="collapse" class="collapse" aria-labelledby="heading">
-                <div class="card-body" id="test">
-                </div>
-            </div>
+      <div class="container">
+        <h1 class="title pt-4">CS 170 Spring 2020 Project Leaderboard</h1>
+        <br>
+        <div class="container" id="leaderboard">
+          <div class="loader"></div>
         </div>
       </div>
 
@@ -72,15 +65,39 @@
             }
         }
         const leaderboards = {};
+
+        document.getElementById("leaderboard").innerHTML = "";
+
         for (let key of Object.keys(leaderboardData)) {
           const sortedEntries = Object.entries(leaderboardData[key]).sort(function compare(elem1, elem2) {
               return elem1[1] - elem2[1];
           });
           leaderboards[key] = createLeaderboardList(names, sortedEntries);
+          document.getElementById("leaderboard").innerHTML += createLeaderboardCard(key);
+          document.getElementById(`${key}-leaderboard-snippet`).appendChild(
+              createLeaderboardList(names, sortedEntries.slice(0, 10))
+          );
         }
-        document.getElementById("test").appendChild(leaderboards['small-1']);
+
 
     }
+
+    function createLeaderboardCard(graphName) {
+        return `<div class="card">
+            <h5 class="card-header">
+                <a data-toggle="collapse" href="#collapse-${graphName}" aria-expanded="true" aria-controls="collapse" id="heading" class="d-block">
+                    <i class="fa fa-chevron-down pull-right"></i>
+                    ${graphName}
+                </a>
+            </h5>
+            <div id="collapse-${graphName}" class="collapse" aria-labelledby="heading">
+                <div class="card-body" id="${graphName}-leaderboard-snippet">
+                </div>
+            </div>
+        </div>`
+    }
+
+
 
     function createLeaderboardList(names, sortedEntries) {
         const table = document.createElement('table');
