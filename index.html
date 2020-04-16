@@ -31,18 +31,31 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sjcl/1.0.8/sjcl.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js'></script>
+
+    <script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-database.js"></script>
     <script src="leaderboard.js"></script>
     <script>
 
+    var firebaseConfig = {
+      "apiKey": "AIzaSyAUNo6Z89YhVhjhHY6R0V3B801CCFz4yBk",
+      "authDomain": "cs-170-project-sp20.firebaseapp.com",
+      "databaseURL": "https://cs-170-project-sp20.firebaseio.com",
+      "projectId": "cs-170-project-sp20",
+      "storageBucket": "cs-170-project-sp20.appspot.com",
+      "messagingSenderId": "948007680547",
+      "appId": "1:948007680547:web:49004f120ecb2fa97d4f96",
+      "measurementId": "G-7NRKFHLE1Z"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+
     function refresh(graphName) {
         document.getElementById("leaderboard").innerHTML = '<div class="loader"></div>';
-        Tabletop.init({
-            key: '18T2DTcjcamzYs2dCmqZFocG0Ftnfgnmf7aUpWs3z-g0',
-            callback: function(data, tabletop) {
-                generateLeaderboard(data, graphName);
-            },
-            simpleSheet: true,
-        });
+        generateLeaderboard(graphName, firebase)
     }
 
     function router(event) {

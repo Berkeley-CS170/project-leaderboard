@@ -1,99 +1,63 @@
 
 const sizes = ['small', 'medium', 'large'];
 const numInputsPerSize = 10;
-const leaderboardData = {};
 
-function generateLeaderboard(data, graphName) {
-    const names = {};
-    for (let i = 0; i < sizes.length; i++) {
-      const size = sizes[i];
-      for (let j = 1; j <= numInputsPerSize; j++) {
-        leaderboardData[`${size}-${j}`] = {};
+function pullLeaderboard(graphName, firebase, callback) {
+    firebase.database().ref("leaderboard").orderByChild("input").equalTo(graphName).once("value", function(snapshot) {
+      const entries = [];
+      snapshot.forEach((item) => entries.push([item.val()["leaderboard_name"], item.val()["score"]]));
+      const sortedEntries = entries.sort((elem1, elem2) => elem1[1] - elem2[1]);
+      callback(sortedEntries);
+    });
+}
+
+function formatLeaderboard(sortedEntries) {
+  const table = document.createElement('table');
+  table.className = 'table';
+  let currentRank = 1;
+  let prevValue = -1;
+  for (let i = 0; i < sortedEntries.length; i++) {
+      const row = document.createElement('tr');
+      entry = sortedEntries[i];
+      const rank = document.createElement('th');
+      rank.innerHTML = currentRank;
+      row.appendChild(rank);
+      const name = document.createElement('td');
+      name.innerHTML = entry[0];
+      row.appendChild(name);
+      const score = document.createElement('td');
+      score.innerHTML = entry[1];
+
+      if (score != prevValue) {
+        currentRank = i + 2;
+        prevValue = score;
       }
-    }
-    for (let i = 0; i < data.length; i++) {
-        const submission = data[i];
-        const hash = submission['hash'];
-        const leaderboardName = submission['leaderboard_name'];
-        const timestamp = Date.parse(submission['timestamp']);
-        for (let key of Object.keys(leaderboardData)) {
-            if (leaderboardData[key].hasOwnProperty(hash)) {
-                leaderboardData[key][hash] = Math.min(parseFloat(submission[key]), leaderboardData[key][hash]);
-            } else {
-                leaderboardData[key][hash] = parseFloat(submission[key])
-            }
-            if (!names.hasOwnProperty(hash) || names[hash]['timestamp'] < timestamp) {
-                names[hash] = {leaderboardName, timestamp};
-            }
-        }
-    }
-    const leaderboards = {};
 
-    if (graphName == null) {
-        document.getElementById("leaderboard").innerHTML = "";
-        for (let key of Object.keys(leaderboardData)) {
-          const sortedEntries = Object.entries(leaderboardData[key]).sort(function compare(elem1, elem2) {
-              return elem1[1] - elem2[1];
-          });
-          leaderboards[key] = createLeaderboardList(names, sortedEntries);
-          document.getElementById("leaderboard").innerHTML += createLeaderboardCard(key);
-          document.getElementById(`${key}-leaderboard-snippet`).appendChild(
-              createLeaderboardList(names, sortedEntries.slice(0, 10))
-          );
-        }
+      row.appendChild(score);
+      table.appendChild(row);
+  }
+  return table;
+}
+
+function createLeaderboard(leaderboardEntries) {
+  console.log(leaderboardEntries);
+  if (leaderboardEntries === null) {
+      document.getElementById('leaderboard').innerHTML += `<div class="row">No submissions exist for ${graphName}.in`;
+  } else {
+      document.getElementById('leaderboard').appendChild(
+        formatLeaderboard(leaderboardEntries)
+      );
+  }
+}
+
+function generateLeaderboard(graphName, firebase) {
+    document.getElementById("leaderboard").innerHTML = "";
+
+    if (graphName === null) {
+      computeFullLeaderboard(firebase, createLeaderboard);
     } else {
-      document.getElementById("leaderboard").innerHTML = "";
-      if (leaderboardData.hasOwnProperty(graphName)) {
-          const sortedEntries = Object.entries(leaderboardData[graphName]).sort(function compare(elem1, elem2) {
-              return elem1[1] - elem2[1];
-          });
-          document.getElementById('leaderboard').appendChild(
-              createLeaderboardList(names, sortedEntries)
-          );
-      } else {
-          document.getElementById('leaderboard').innerHTML += `<div class="row">Input name ${graphName}.in does not exist`;
-      }
-
+      pullLeaderboard(graphName, firebase, createLeaderboard);
     }
-
-
-
-
-}
-
-function createLeaderboardCard(graphName) {
-    return `<div class="card">
-        <h5 class="card-header">
-            <a data-toggle="collapse" href="#collapse-${graphName}" aria-expanded="true" aria-controls="collapse" id="heading" class="d-block">
-                <i class="fa fa-chevron-down pull-right"></i>
-                ${graphName}
-            </a>
-        </h5>
-        <div id="collapse-${graphName}" class="collapse" aria-labelledby="heading">
-            <div class="card-body" id="${graphName}-leaderboard-snippet">
-            <a href="?graph=${graphName}">View full input leaderboard</a>
-            </div>
-        </div>
-    </div>`
-}
-
-
-
-function createLeaderboardList(names, sortedEntries) {
-    const table = document.createElement('table');
-    table.className = 'table';
-    for (let i = 0; i < sortedEntries.length; i++) {
-        const row = document.createElement('tr');
-        entry = sortedEntries[i];
-        const name = document.createElement('td');
-        name.innerHTML = names[entry[0]]['leaderboardName'];
-        row.appendChild(name);
-        const score = document.createElement('td');
-        score.innerHTML = entry[1];
-        row.appendChild(score);
-        table.appendChild(row);
-    }
-    return table;
 }
 
 function getQueryVariable(variable) {
