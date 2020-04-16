@@ -53,17 +53,17 @@
     firebase.initializeApp(firebaseConfig);
     firebase.analytics();
 
-    function refresh(graphName) {
+    async function refresh(graphName) {
         document.getElementById("leaderboard").innerHTML = '<div class="loader"></div>';
-        generateLeaderboard(graphName, firebase)
+        await generateLeaderboard(graphName, firebase)
     }
 
-    function router(event) {
-        refresh(getQueryVariable('graph'));
+    async function router(event) {
+        await refresh(getQueryVariable('graph'));
     }
 
-    window.addEventListener('load', router);
-    window.addEventListener('hashchange', router);
+    window.addEventListener('load', (event) => router(event), false);
+    window.addEventListener('hashchange', (event) => router(event), false);
 
     </script>
   </body>

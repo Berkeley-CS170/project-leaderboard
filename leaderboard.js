@@ -2,13 +2,53 @@
 const sizes = ['small', 'medium', 'large'];
 const numInputsPerSize = 10;
 
-function pullLeaderboard(graphName, firebase, callback) {
-    firebase.database().ref("leaderboard").orderByChild("input").equalTo(graphName).once("value", function(snapshot) {
-      const entries = [];
-      snapshot.forEach((item) => entries.push([item.val()["leaderboard_name"], item.val()["score"]]));
-      const sortedEntries = entries.sort((elem1, elem2) => elem1[1] - elem2[1]);
-      callback(sortedEntries);
+async function pullLeaderboard(graphName, firebase) {
+    const entries = [];
+    await firebase.database().ref("leaderboard").orderByChild("input").equalTo(graphName).once("value", function(snapshot) {
+      snapshot.forEach(function(item) {
+        entries.push([item.val()["leaderboard_name"], item.val()["score"]]);
+      });
     });
+    return entries.sort((elem1, elem2) => elem1[1] - elem2[1]);
+}
+
+async function computeFullLeaderboard(firebase) {
+    const namesAndRanks = {};
+    let totalInputs = 0;
+    for (let i = 0; i < sizes.length; i++) {
+      const size = sizes[i];
+      for (let j = 1; j <= numInputsPerSize; j++) {
+        const leaderboard = await pullLeaderboard(`${size}-${j}`, firebase);
+        let currentRank = 1;
+        let prevValue = -1;
+        for (let i = 0; i < leaderboard.length; i++) {
+          entry = leaderboard[i];
+          name = entry[0];
+          score = entry[1];
+
+          if (!namesAndRanks.hasOwnProperty(name)) {
+              namesAndRanks[name] = [];
+          }
+
+          namesAndRanks[name].push(currentRank);
+
+          if (score != prevValue) {
+            currentRank = i + 2;
+            prevValue = score;
+          }
+        }
+        totalInputs++;
+      }
+    }
+    const finalEntries = [];
+    for (let name in namesAndRanks) {
+      const scores = namesAndRanks[name];
+      if (scores.length == totalInputs) {
+        const average = scores.reduce((a, b) => a + b) / totalInputs;
+        finalEntries.push([name, average]);
+      }
+    }
+    return finalEntries.sort((elem1, elem2) => elem1[1] - elem2[1]);
 }
 
 function formatLeaderboard(sortedEntries) {
@@ -40,7 +80,6 @@ function formatLeaderboard(sortedEntries) {
 }
 
 function createLeaderboard(leaderboardEntries) {
-  console.log(leaderboardEntries);
   if (leaderboardEntries === null) {
       document.getElementById('leaderboard').innerHTML += `<div class="row">No submissions exist for ${graphName}.in`;
   } else {
@@ -50,13 +89,15 @@ function createLeaderboard(leaderboardEntries) {
   }
 }
 
-function generateLeaderboard(graphName, firebase) {
+async function generateLeaderboard(graphName, firebase) {
     document.getElementById("leaderboard").innerHTML = "";
 
     if (graphName === null) {
-      computeFullLeaderboard(firebase, createLeaderboard);
+      const entries = await computeFullLeaderboard(firebase);
+      createLeaderboard(entries);
     } else {
-      pullLeaderboard(graphName, firebase, createLeaderboard);
+      const entries = await pullLeaderboard(graphName, firebase);
+      createLeaderboard(entries);
     }
 }
 
