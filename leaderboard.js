@@ -19,23 +19,17 @@ async function computeFullLeaderboard(firebase) {
       const size = sizes[i];
       for (let j = 1; j <= numInputsPerSize; j++) {
         const leaderboard = await pullLeaderboard(`${size}-${j}`, firebase);
-        let currentRank = 1;
-        let prevValue = -1;
+        const ranks = getRanks(leaderboard);
         for (let i = 0; i < leaderboard.length; i++) {
           entry = leaderboard[i];
           name = entry[0];
           score = entry[1];
-
+          
           if (!namesAndRanks.hasOwnProperty(name)) {
-              namesAndRanks[name] = [];
+            namesAndRanks[name] = [];
           }
 
-          namesAndRanks[name].push(currentRank);
-
-          if (score != prevValue) {
-            currentRank = i + 2;
-            prevValue = score;
-          }
+          namesAndRanks[name].push(ranks[i]);
         }
         totalInputs++;
       }
@@ -51,12 +45,40 @@ async function computeFullLeaderboard(firebase) {
     return finalEntries.sort((elem1, elem2) => elem1[1] - elem2[1]);
 }
 
-function formatLeaderboard(sortedEntries) {
+function getRanks(sortedEntries) {
+    let currentRank = 0;
+    let prevValue = -1;
+
+    const ranks = [];
+
+    for (let i = 0; i < sortedEntries.length; i++) {
+        const entry = sortedEntries[i];
+
+        if (entry[1] != prevValue) {
+          currentRank++;
+          prevValue = entry[1];
+        }
+        
+        ranks.push(currentRank);
+    }
+    return ranks;
+}
+
+function formatLeaderboard(sortedEntries, header) {
   const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  thead.innerHTML = `
+    <tr>
+      <th>#</th>
+      <th>${header[0]}</th>
+      <th>${header[1]}</th>
+    </tr>
+  `;
+  table.appendChild(thead);
   table.className = 'table';
-  let currentRank = 1;
-  let prevValue = -1;
+  ranks = getRanks(sortedEntries);
   for (let i = 0; i < sortedEntries.length; i++) {
+      const currentRank = ranks[i];
       const row = document.createElement('tr');
       entry = sortedEntries[i];
       const rank = document.createElement('th');
@@ -68,37 +90,34 @@ function formatLeaderboard(sortedEntries) {
       const score = document.createElement('td');
       score.innerHTML = entry[1];
 
-      if (score != prevValue) {
-        currentRank = i + 2;
-        prevValue = score;
-      }
-
       row.appendChild(score);
       table.appendChild(row);
   }
   return table;
 }
 
-function createLeaderboard(leaderboardEntries) {
+function createLeaderboard(leaderboardEntries, header) {
   if (leaderboardEntries === null) {
       document.getElementById('leaderboard').innerHTML += `<div class="row">No submissions exist for ${graphName}.in`;
   } else {
       document.getElementById('leaderboard').appendChild(
-        formatLeaderboard(leaderboardEntries)
+        formatLeaderboard(leaderboardEntries, header)
       );
   }
 }
 
 async function generateLeaderboard(graphName, firebase) {
-    document.getElementById("leaderboard").innerHTML = "";
-
+    let entries = null;
+    let header = null;
     if (graphName === null) {
-      const entries = await computeFullLeaderboard(firebase);
-      createLeaderboard(entries);
+      entries = await computeFullLeaderboard(firebase);
+      header = ["Team Name", "Average Rank"];
     } else {
-      const entries = await pullLeaderboard(graphName, firebase);
-      createLeaderboard(entries);
+      entries = await pullLeaderboard(graphName, firebase);
+      header = ["Team Name", "Average Pairwise Distance"];
     }
+    document.getElementById("leaderboard").innerHTML = "";
+    createLeaderboard(entries, header);
 }
 
 function getQueryVariable(variable) {
