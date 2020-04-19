@@ -54,7 +54,7 @@
             <label class="form-check-label" for="inlineRadio1">S</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="size" id="inlineRadio2" value="med">
+            <input class="form-check-input" type="radio" name="size" id="inlineRadio2" value="medium">
             <label class="form-check-label" for="inlineRadio2">M</label>
           </div>
           <div class="form-check form-check-inline">
@@ -104,7 +104,13 @@
     }
 
     async function router(event) {
-        await refresh(getQueryVariable('size').concat('-', getQueryVariable('num')));
+        const size = getQueryVariable('size');
+        const num = getQueryVariable('num');
+        let graphName = null;
+        if (!(size == null || num == null)) {
+            graphName = `${size}-${num}`;
+        }   
+        await refresh(graphName);
     }
 
     window.addEventListener('load', (event) => router(event), false);

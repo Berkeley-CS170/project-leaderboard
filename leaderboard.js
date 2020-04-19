@@ -65,6 +65,12 @@ function getRanks(sortedEntries) {
 }
 
 function formatLeaderboard(sortedEntries, header) {
+  if (sortedEntries.length == 0) {
+    const div = document.createElement('div');
+    div.innerHTML = 'Invalid input name';
+    div.className = 'invalid-graph';
+    return div;
+  }
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   thead.innerHTML = `
