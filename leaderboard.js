@@ -131,7 +131,7 @@ async function generateTeamView(teamName, firebase) {
    const entries = await generateRanksForTeam(teamName, firebase);
    document.getElementById("table").innerHTML = '';
    if (entries == null) {
-     const div = document.createElement('div');
+     const div = document.createElement('h1');
      div.innerHTML = 'Invalid team name';
      div.className = 'invalid';
      document.getElementById("table").appendChild(div);
@@ -161,7 +161,7 @@ async function generateLeaderboard(graphName, firebase) {
     }
     document.getElementById("table").innerHTML = '';
     if (entries.length == 0) {
-      const div = document.createElement('div');
+      const div = document.createElement('h1');
       div.innerHTML = 'Invalid input name';
       div.className = 'invalid';
       document.getElementById("table").appendChild(div);

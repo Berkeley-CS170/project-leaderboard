@@ -29,3 +29,7 @@
 .nav-title,.leaderboard-link,.team-link {
   cursor: pointer;
 }
+
+.invalid {
+  font-style: italic;
+}
