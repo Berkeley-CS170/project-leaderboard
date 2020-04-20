@@ -1,6 +1,6 @@
 
 const sizes = ['small', 'medium', 'large'];
-const numInputsPerSize = 10;
+const numInputsPerSize = [300, 300, 400];
 
 let test = null;
 
@@ -14,14 +14,31 @@ async function pullLeaderboard(graphName, firebase) {
     return entries.sort((elem1, elem2) => elem1[1] - elem2[1]);
 }
 
+async function pullFullLeaderboard(firebase) {
+    const leaderboards = {};
+    await firebase.database().ref("leaderboard").orderByChild("input").once("value", function(snapshot) {
+      snapshot.forEach(function(item) {
+        const name = item.val()["leaderboard_name"];
+        const inputName = item.val()["input"];
+        const score = item.val()["score"];
+        if (!leaderboards.hasOwnProperty(inputName)) {
+            leaderboards[inputName] = [];
+        }
+        leaderboards[inputName].push([name, score]);
+      });
+    });
+    return leaderboards;
+}
+
 async function computeFullLeaderboard(firebase) {
+    const leaderboards = await pullFullLeaderboard(firebase);
     const namesAndRanks = {};
     let totalInputs = 0;
     for (let i = 0; i < sizes.length; i++) {
       const size = sizes[i];
-      for (let j = 1; j <= numInputsPerSize; j++) {
+      for (let j = 1; j <= numInputsPerSize[i]; j++) {
         const graphName = `${size}-${j}`;
-        const leaderboard = await pullLeaderboard(graphName, firebase);
+        const leaderboard = leaderboards[graphName].sort((elem1, elem2) => elem[1] - elem2[1]);
         const ranks = getRanks(leaderboard);
         for (let i = 0; i < leaderboard.length; i++) {
           entry = leaderboard[i];
@@ -102,7 +119,7 @@ function formatTable(sortedEntries, header, addRanks) {
 function createLeaderboard(leaderboardEntries, header, title) {
   for (let i = 0; i < leaderboardEntries.length; i++) {
     const entry = leaderboardEntries[i];
-    entry[0] = `<a class="team-link" onclick="moveToTeam('${entry[0]}')">${entry[0]}</a>`;
+    entry[0] = `<span class="team-link"><a onclick="moveToTeam('${entry[0]}')">${entry[0]}</a></span>`;
   }
   document.getElementById('table-title').innerHTML = title;
   document.getElementById('table').appendChild(
@@ -113,7 +130,7 @@ function createLeaderboard(leaderboardEntries, header, title) {
 function createTeamView(teamEntries, teamName) {
   for (let i = 0; i < teamEntries.length; i++) {
     const entry = teamEntries[i];
-    entry[0] = `<a class="leaderboard-link" onclick="moveToLeaderboard('${entry[0]}')">${entry[0]}</a>`;
+    entry[0] = `<span class="leaderboard-link"><a onclick="moveToLeaderboard('${entry[0]}')">${entry[0]}</a></span>`;
   }
   document.getElementById('table-title').innerHTML = `Team <code>${teamName}</code>`;
   document.getElementById('table').appendChild(
