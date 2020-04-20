@@ -23,11 +23,11 @@
 
   <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#">CS 170 Spring 2020 Leaderboard</a>
+      <a class="navbar-brand nav-title" onclick="moveToIndex()">CS 170 Spring 2020 Leaderboard</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-    
+
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav ml-auto">
           <!-- <li class="nav-item active">
@@ -67,11 +67,9 @@
       </div>
     </nav>
       <div class="container">
-        <h1 class="title pt-4">
-          <a onclick="window.location.replace(window.location.pathname)">CS 170 Spring 2020 Project Leaderboard</a>
-        </h1>
+        <h1 id="table-title" class="title pt-4"></h1>
         <br>
-        <div class="container" id="leaderboard">
+        <div class="container" id="table">
           <div class="loader"></div>
         </div>
       </div>
@@ -99,18 +97,41 @@
     firebase.analytics();
 
     async function refresh(graphName) {
-        document.getElementById("leaderboard").innerHTML = '<div class="loader"></div>';
+        document.getElementById("table").innerHTML = '<div class="loader"></div>';
         await generateLeaderboard(graphName, firebase)
+    }
+
+    async function teamView(teamName) {
+        document.getElementById("table").innerHTML = '<div class="loader"></div>';
+        await generateTeamView(teamName, firebase);
     }
 
     async function router(event) {
         const size = getQueryVariable('size');
         const num = getQueryVariable('num');
+        const team = getQueryVariable('team');
         let graphName = null;
         if (!(size == null || num == null)) {
-            graphName = `${size}-${num}`;
-        }   
-        await refresh(graphName);
+            await refresh(`${size}-${num}`);
+        } else if (team != null) {
+            await teamView(team);
+        } else {
+            await refresh(null);
+        }
+    }
+
+    function moveToTeam(teamName) {
+      window.location.search = `?team=${teamName}`;
+    }
+
+    function moveToLeaderboard(graphName) {
+      const size = graphName.split('-')[0];
+      const num = graphName.split('-')[1];
+      window.location.search = `?size=${size}&num=${num}`;
+    }
+
+    function moveToIndex() {
+      window.location.search = "";
     }
 
     window.addEventListener('load', (event) => router(event), false);

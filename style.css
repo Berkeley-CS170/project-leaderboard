@@ -16,5 +16,16 @@
 }
 
 .card {
-  border: unset; 
+  border: unset;
+}
+
+.team-link:hover {
+  text-decoration: underline;
+}
+.leaderboard-link:hover {
+  text-decoration: underline;
+}
+
+.nav-title,.leaderboard-link,.team-link {
+  cursor: pointer;
 }
