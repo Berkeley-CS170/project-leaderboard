@@ -25,7 +25,6 @@ async function pullFullLeaderboard(firebase) {
             leaderboards[inputName] = [];
         }
         leaderboards[inputName].push([name, score]);
-        numGraphs++;
       });
     });
     return leaderboards;
