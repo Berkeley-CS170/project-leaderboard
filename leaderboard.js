@@ -1,6 +1,6 @@
 
 const sizes = ['small', 'medium', 'large'];
-const numInputsPerSize = [300, 300, 400];
+const numInputsPerSize = [303, 303, 400];
 
 let test = null;
 
