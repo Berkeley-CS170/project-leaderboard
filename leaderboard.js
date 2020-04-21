@@ -2,13 +2,17 @@
 const sizes = ['small', 'medium', 'large'];
 const numInputsPerSize = [303, 303, 400];
 
-let test = null;
+function round(x) {
+    return Math.round((x + Number.EPSILON) * 10000) / 10000;
+}
 
 async function pullLeaderboard(graphName, firebase) {
     const entries = [];
     await firebase.database().ref("leaderboard").orderByChild("input").equalTo(graphName).once("value", function(snapshot) {
       snapshot.forEach(function(item) {
-        entries.push([item.val()["leaderboard_name"], item.val()["score"]]);
+        const name = item.val()["leaderboard_name"];
+        const score = round(item.val()["score"]);
+        entries.push([name, score]);
       });
     });
     return entries.sort((elem1, elem2) => elem1[1] - elem2[1]);
@@ -20,7 +24,7 @@ async function pullFullLeaderboard(firebase) {
       snapshot.forEach(function(item) {
         const name = item.val()["leaderboard_name"];
         const inputName = item.val()["input"];
-        const score = item.val()["score"];
+        const score = round(item.val()["score"]);
         if (!leaderboards.hasOwnProperty(inputName)) {
             leaderboards[inputName] = [];
         }
@@ -60,7 +64,7 @@ async function computeFullLeaderboard(firebase) {
       test = scores;
       if (scores.length == totalInputs) {
         const average = scores.reduce((a, b) => a + b[1], 0) / totalInputs;
-        finalEntries.push([name, average]);
+        finalEntries.push([name, round(average)]);
       }
     }
     return [namesAndRanks, finalEntries.sort((elem1, elem2) => elem1[1] - elem2[1])];
@@ -76,9 +80,9 @@ function getRanks(sortedEntries) {
         const entry = sortedEntries[i];
 
         if (entry[1] != prevValue) {
-          currentRank++;
+          currentRank = i + 1;
           prevValue = entry[1];
-        }
+        } 
 
         ranks.push(currentRank);
     }
