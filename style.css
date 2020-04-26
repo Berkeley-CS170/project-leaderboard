@@ -33,3 +33,8 @@
 .invalid {
   font-style: italic;
 }
+
+span.icon:before {
+  font-family: 'Glyphicons Halflings';
+  content: "\f015";
+}
