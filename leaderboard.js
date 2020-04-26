@@ -3,6 +3,23 @@ const sizes = ['small', 'medium', 'large'];
 const numInputsPerSize = 10;
 
 let test = null;
+let teams = null;
+
+async function loadTeams(firebase) {
+  const teamSet = new Set();
+  await firebase.database().ref("leaderboard").orderByChild("leaderboard_name").once("value", 
+  function(snapshot) {
+    snapshot.forEach(function (item) {
+      teamSet.add(item.val()["leaderboard_name"]);
+    });
+  });
+  teams = Array.from(teamSet).slice();
+}
+
+async function loadAutocomplete(input, firebase) {
+  await loadTeams(firebase);
+  new Awesomplete(input, {list: teams});
+}
 
 async function pullLeaderboard(graphName, firebase) {
     const entries = [];
