@@ -2,6 +2,7 @@
 const sizes = ['small', 'medium', 'large'];
 const numInputsPerSize = [303, 303, 400];
 
+let teamSet = new Set();
 
 async function loadTeams(firebase) {
   const teamSet = new Set();
@@ -11,12 +12,14 @@ async function loadTeams(firebase) {
       teamSet.add(item.val()["leaderboard_name"]);
     });
   });
-  return Array.from(teamSet).slice();
 }
 
 async function loadAutocomplete(input, firebase) {
-  teams = await loadTeams(firebase);
-  new Awesomplete(input, {list: teams});
+  if (!teamSet.size) {
+    teams = await loadTeams(firebase);
+    console.warn("Teams not loaded, check pullLeaderboard functions.");
+  }
+  new Awesomplete(input, {list: Array.from(teamSet)});
 }
 
 function round(x) {
@@ -30,6 +33,7 @@ async function pullLeaderboard(graphName, firebase) {
         const name = item.val()["leaderboard_name"];
         const score = round(item.val()["score"]);
         entries.push([name, score]);
+        teamSet.add(name);
       });
     });
     return entries.sort((elem1, elem2) => elem1[1] - elem2[1]);
@@ -46,6 +50,7 @@ async function pullFullLeaderboard(firebase) {
             leaderboards[inputName] = [];
         }
         leaderboards[inputName].push([name, score]);
+        teamSet.add(name);
       });
     });
     return leaderboards;
