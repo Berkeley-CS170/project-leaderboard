@@ -6,36 +6,36 @@ function round(x) {
     return Math.round((x + Number.EPSILON) * 10000) / 10000;
 }
 
-async function pullLeaderboard(graphName, firebase) {
-    const entries = [];
-    await firebase.database().ref("leaderboard").orderByChild("input").equalTo(graphName).once("value", function(snapshot) {
-      snapshot.forEach(function(item) {
-        const name = item.val()["leaderboard_name"];
-        const score = round(item.val()["score"]);
-        entries.push([name, score]);
-      });
-    });
-    return entries.sort((elem1, elem2) => elem1[1] - elem2[1]);
-}
-
-async function pullFullLeaderboard(firebase) {
+async function pullFullLeaderboard() {
     const leaderboards = {};
-    await firebase.database().ref("leaderboard").orderByChild("input").once("value", function(snapshot) {
-      snapshot.forEach(function(item) {
-        const name = item.val()["leaderboard_name"];
-        const inputName = item.val()["input"];
-        const score = round(item.val()["score"]);
+    
+    for (let key in firebaseData['leaderboard']) {
+        const entry = firebaseData['leaderboard'][key];
+        const name = entry['leaderboard_name'];
+        const score = round(entry['score']);
+        const inputName = entry['input'];
         if (!leaderboards.hasOwnProperty(inputName)) {
             leaderboards[inputName] = [];
         }
         leaderboards[inputName].push([name, score]);
-      });
-    });
+    }
     return leaderboards;
 }
 
-async function computeFullLeaderboard(firebase) {
-    const leaderboards = await pullFullLeaderboard(firebase);
+async function pullLeaderboard(graphName) {
+    const entries = [];
+
+    for (let key in firebaseData['leaderboard']) {
+        const entry = firebaseData['leaderboard'][key];
+        if (entry['input'] == graphName) {
+            entries.push([entry['leaderboard_name'], round(entry['score'])]);
+        }
+    }
+    return entries;
+}
+
+async function computeFullLeaderboard() {
+    const leaderboards = await pullFullLeaderboard();
     const namesAndRanks = {};
     let totalInputs = 0;
     for (let i = 0; i < sizes.length; i++) {
@@ -142,14 +142,14 @@ function createTeamView(teamEntries, teamName) {
   );
 }
 
-async function generateRanksForTeam(teamName, firebase) {
-  fullLeaderboardResults = await computeFullLeaderboard(firebase);
+async function generateRanksForTeam(teamName) {
+  fullLeaderboardResults = await computeFullLeaderboard();
   namesAndRanks = fullLeaderboardResults[0];
   return namesAndRanks.hasOwnProperty(teamName) ? namesAndRanks[teamName] : null;
 }
 
-async function generateTeamView(teamName, firebase) {
-   const entries = await generateRanksForTeam(teamName, firebase);
+async function generateTeamView(teamName) {
+   const entries = await generateRanksForTeam(teamName);
    document.getElementById("table").innerHTML = '';
    if (entries == null) {
      const div = document.createElement('h1');
@@ -161,17 +161,17 @@ async function generateTeamView(teamName, firebase) {
    }
 }
 
-async function generateLeaderboard(graphName, firebase) {
+async function generateLeaderboard(graphName) {
     let entries = null;
     let header = null;
     let title = null;
     if (graphName === null) {
-      fullLeaderboardResults = await computeFullLeaderboard(firebase);
+      fullLeaderboardResults = await computeFullLeaderboard();
       entries = fullLeaderboardResults[1];
       header = ["#", "Team Name", "Average Rank"];
       title = "";
     } else {
-      entries = await pullLeaderboard(graphName, firebase);
+      entries = await pullLeaderboard(graphName);
       if (entries.length > 0) {
         header = ["#", "Team Name", "Average Pairwise Distance"];
         title = `<code>${graphName}.in</code>`;
