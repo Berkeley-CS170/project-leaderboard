@@ -3,9 +3,20 @@ const sizes = ['small', 'medium', 'large'];
 const numInputsPerSize = [303, 303, 400];
 
 let teamSet = new Set();
+let firebaseData = null;
+
+async function getFirebaseData() {
+    const response = await fetch('https://www.dl.dropboxusercontent.com/s/7p4f4lia4ln04o2/cs-170-project-sp20-export.json?dl=1');
+    const data = await response.json();
+    console.log(data['teams']);
+    return data;
+}
 
 async function loadTeams() {
   teamSet = new Set();
+  if (firebaseData == null) {
+      firebaseData = await getFirebaseData();
+  }
   for (let key in firebaseData['leaderboard']) {
     const item = firebaseData['leaderboard'][key];
     teamSet.add(item["leaderboard_name"]);
@@ -26,6 +37,10 @@ function round(x) {
 }
 
 async function pullFullLeaderboard(firebase) {
+    if (firebaseData == null) {
+        firebaseData = await getFirebaseData();
+    }
+    
     const leaderboards = {};
 
     for (let key in firebaseData['leaderboard']) {
@@ -42,6 +57,10 @@ async function pullFullLeaderboard(firebase) {
 }
 
 async function pullLeaderboard(graphName) {
+    if (firebaseData == null) {
+        firebaseData = await getFirebaseData();
+    }
+
     const entries = [];
 
     for (let key in firebaseData['leaderboard']) {
