@@ -2,13 +2,32 @@
 const sizes = ['small', 'medium', 'large'];
 const numInputsPerSize = [303, 303, 400];
 
+let teamSet = new Set();
+
+async function loadTeams() {
+  teamSet = new Set();
+  for (let key in firebaseData['leaderboard']) {
+    const item = firebaseData['leaderboard'][key];
+    teamSet.add(item["leaderboard_name"]);
+  }
+  return teamSet;
+}
+
+async function loadAutocomplete(input) {
+  if (!teamSet.size) {
+    teams = await loadTeams();
+    console.warn("Teams not loaded, check pullLeaderboard functions.");
+  }
+  new Awesomplete(input, {list: Array.from(teamSet)});
+}
+
 function round(x) {
     return Math.round((x + Number.EPSILON) * 10000) / 10000;
 }
 
-async function pullFullLeaderboard() {
+async function pullFullLeaderboard(firebase) {
     const leaderboards = {};
-    
+
     for (let key in firebaseData['leaderboard']) {
         const entry = firebaseData['leaderboard'][key];
         const name = entry['leaderboard_name'];
@@ -82,7 +101,7 @@ function getRanks(sortedEntries) {
         if (entry[1] != prevValue) {
           currentRank = i + 1;
           prevValue = entry[1];
-        } 
+        }
 
         ranks.push(currentRank);
     }
